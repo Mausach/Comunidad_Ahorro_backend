@@ -61,9 +61,6 @@ const crearUsuario = async (req, res) => {
   }
 };
 
-
-
-
 //fal7a en el fron7 de admin un modulo para crear rol
 const crearRol = async (req, res) => {
     const { nombre, estado } = req.body;

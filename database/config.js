@@ -2,11 +2,18 @@ require('dotenv').config();
 
 const { Sequelize } = require('sequelize');
 
-/*
+// Verifica el valor de las variables de entorno
+//console.log('BASENAME:', process.env.BASENAME);
+//console.log('BASEUSER:', process.env.BASEUSER);
+//console.log('BASEPASS:', process.env.BASEPASS);
+//console.log('HOST:', process.env.HOST);
+//console.log('DATABASEDIALECT:', process.env.DATABASEDIALECT);
+
 // URL de conexión proporcionada por Render
 const databaseUrl=process.env.RENDER_DB_URL;
 
-  // Configuración de conexión a la base de datos
+/*
+  // Configuración de conexión a la base de datos URL
 const sequelize = new Sequelize(
   //process.env.BASENAME,
   //process.env.BASEUSER,
@@ -27,8 +34,7 @@ const sequelize = new Sequelize(
 */
 
   // Configuración de conexión a la base de datos LOCAL
-
-  const sequelize = new Sequelize(
+const sequelize = new Sequelize(
   process.env.BASENAME,
   process.env.BASEUSER,
   process.env.BASEPASS, { //esos da7os deberian es7ar en el env
@@ -40,25 +46,6 @@ const sequelize = new Sequelize(
   },
   
 });
-
-
-/*
-const dbConeccion = async () => {
-  // Prueba de conexión a la base de datos
-sequelize
-.authenticate()
-.then(() => {
-  console.log('Conexión a la base de datos establecida con éxito.');
-})
-.catch((error) => {
-  console.error('Error al conectar con la base de datos:', error);
-  //aqui va la coneccion a la DB local
-});
-
-}
-*/
-
-
   
 
 // Exporta la instancia de Sequelize configurada

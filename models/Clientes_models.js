@@ -1,134 +1,91 @@
 const sequelize = require('../database/config');
 const { DataTypes } = require('sequelize');
-const Rol = require('./Rol_models');
 
 
-
-const Usuario = sequelize.define('Usuario', {
+const Clientes = sequelize.define('Clientes', {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
     autoIncrement: true,
   },
-
-  nombres: {
-    type: DataTypes.STRING(25),
-    allowNull: false,
-
-  },
-
   apellido: {
     type: DataTypes.STRING(25),
     allowNull: false,
-
+    
   },
-
-  direccion: {
+  nombre: {
+    type: DataTypes.STRING(25),
+    allowNull: false,
+    
+  },
+  direccion_comersial: {
+    type: DataTypes.STRING(65),
+    
+    
+  },
+  direccion_hogar: {
     type: DataTypes.STRING(65),
     allowNull: false,
+    
   },
-
   dni: {
     type: DataTypes.STRING(8),
     allowNull: false,
     unique: true,
   },
-
   cuil: {
     type: DataTypes.STRING(11),
-
+    allowNull: true,
     unique: true,
   },
-
+  tarjeta: {
+    type: DataTypes.STRING(25),
+    
+  },
   email: {
     type: DataTypes.STRING(35),
     allowNull: false,
     unique: true,
   },
-
   numero_telefono: {
     type: DataTypes.STRING(12),
     allowNull: false,
     unique: true,
   },
-
   numero_telefono_2: {
     type: DataTypes.STRING(12),
-   
+    
     unique: true,
   },
 
   apellido_familiar: {
     type: DataTypes.STRING(25),
+    allowNull: false,
     
-
   },
-
+  
   nombre_familiar: {
     type: DataTypes.STRING(25),
+    allowNull: false,
     
-
   },
 
-  fecha_ingreso: {
-    type: DataTypes.DATE,
-    allowNull: false
-  },
-
-  fecha_despido_renuncia: {
-    type: DataTypes.DATE,
-
-  },
-
-  estado_acceso: {
-    type: DataTypes.BOOLEAN,
-    allowNull: false,
-    defaultValue: true,
-  },
-
-  estado_rendimiento: {
-    type: DataTypes.STRING(20),
-
-  },
-
-  monotributo: {
-    type: DataTypes.BOOLEAN,
-    allowNull: false,
-    defaultValue: false,
-  },
-
-  objetivo: {
+  situacion_veraz: {
     type: DataTypes.INTEGER,
-    allowNull: false,
-    defaultValue: 0,
-
+    
   },
-
-  sueldo: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    defaultValue: 0,
-  },
-
-  nombre_de_usuario: {
-    type: DataTypes.STRING(25),
-    allowNull: false,
-  },
-
-  contraseña: {
+  numero_cliente: {
     type: DataTypes.STRING,
+    unique: true, // Asegura que el numero_cliente sea único
     allowNull: false,
   },
-
-  //rol
-
 });
 
 
 
 
 // Sincroniza el modelo con la base de datos (esto crea la tabla si no existe)
-Usuario.sync();
+Clientes.sync();
 
 
-module.exports = Usuario;
+module.exports = Clientes;

@@ -22,8 +22,5 @@ routerAdmin.post('/new', [// para nuevo US
 
 
 
-
-
-
 //aclaras que se exporta todo lo trabajado con router
 module.exports = routerAdmin;

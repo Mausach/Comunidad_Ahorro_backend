@@ -11,7 +11,7 @@ const routerAuth = express.Router();
 routerAuth.post('/login',
   [ //cuando usamos varios midelwar van dentro de corchetes verifican que los campos existan y despues va recien el validar
 
-      check("email", "el email es obligatorio").not().isEmpty(),
+      check("emailOrUsername", "el email es obligatorio").not().isEmpty(),
       check("password", "la pasword es obligatoria").not().isEmpty(),
       validarCampos
 
