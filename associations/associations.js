@@ -13,7 +13,7 @@ const Venta_directa = require('../models/Venta_directa_models');
 const Venta_permutada = require('../models/Venta_permutada_models');
 const Servicios = require('../models/Servicios_models');
 const Rol = require('../models/Rol_models');
-const Entrega_pactada = require('../models/entrega_pactada_models');
+const Entrega_pactada = require('../models/Entrega_pactada_models');
 
 // Relación: un usuario tiene un único rol
 Usuario.belongsTo(Rol, { foreignKey: 'rolId', as: 'rol' });
@@ -28,7 +28,7 @@ Plan.belongsTo(Usuario, { foreignKey: 'vendedorId', as: 'vendedor' });
 Plan.hasMany(Cuota, { foreignKey: 'planId', as: 'cuotas' });
 
 // Relación: un plan tiene una entrega pactada
-Plan.hasOne(Entrega_pactada, { foreignKey: 'planId', as: 'entrega_pactada' });
+Plan.hasOne(Entrega_pactada, { foreignKey: 'planId', as: 'Entrega_pactada' });
 
 // Relación: venta_directa pertenece a un Producto
 Venta_directa.belongsTo(Producto, { foreignKey: 'productoId', as: 'producto' });
