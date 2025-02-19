@@ -3262,8 +3262,6 @@ const cargarRendiciones = async (req, res) => {
 };
 
 
-
-
 const obtenerProductosClienteCuotas = async (req, res) => {
   try {
     const { clienteId } = req.params;
@@ -3482,6 +3480,156 @@ const cargarPlanesConCuotasPagadas = async (req, res) => {
   }
 };
 
+//carga prestamos o planes para reporte
+const cargarProductosPorCategoria2 = async (req, res) => {
+  try {
+    const { cat } = req.params; // Se obtiene la categoría (préstamos o planes)
+
+    // Dependiendo de la categoría, cargamos los productos correspondientes
+    let productos;
+    if (cat === 'Préstamo') {
+      productos = await Prestamos.findAll({
+        include: [
+          {
+            model: Cuota,
+            as: 'cuotas',
+            required: false,
+          },
+          {
+            model: Clientes,
+            as: 'cliente',
+          },
+        ],
+      });
+    } else if (cat === 'Plan') {
+      productos = await Plan.findAll({
+        include: [
+          {
+            model: Cuota,
+            as: 'cuotas',
+            required: false,
+          },
+          {
+            model: Clientes,
+            as: 'cliente',
+          },
+        ],
+      });
+    } else {
+      return res.status(400).json({ msg: 'Categoría inválida' });
+    }
+
+    // Procesamos los datos y los organizamos para la respuesta
+    const resultados = productos.map(producto => {
+      return {
+        cliente: producto.cliente, // Datos del cliente
+        cuotas: producto.cuotas,   // Cuotas asociadas al producto
+        producto: {               // Datos del producto (préstamo o plan)
+          id: producto.id,
+          nombre: producto.nombre,
+          fecha_realizado: producto.fecha_realizado,
+          estado:producto.estado,
+          sit_cliente: producto.instancia_cliente || producto.conducta_cliente,
+          monto_prestado: producto.monto_prestado || 0,
+          cat: cat,   // Categoría para referencia (prestamo o plan)
+        },
+      };
+    });
+
+    res.json({ resultados });
+
+  } catch (error) {
+    console.error('Error al obtener los productos:', error);
+    res.status(500).json({ msg: 'Error interno del servidor' });
+  }
+};
+
+const cargarProductosPorCategoria = async (req, res) => {
+  try {
+    const { cat } = req.params; // Se obtiene la categoría (préstamos o planes)
+
+    // Dependiendo de la categoría, cargamos los productos correspondientes
+    let productos;
+    if (cat === 'Préstamo') {
+      productos = await Prestamos.findAll({
+        include: [
+          {
+            model: Cuota,
+            as: 'cuotas',
+            required: false,
+          },
+          {
+            model: Clientes,
+            as: 'cliente',
+          },
+        ],
+      });
+    } else if (cat === 'Plan') {
+      productos = await Plan.findAll({
+        include: [
+          {
+            model: Cuota,
+            as: 'cuotas',
+            required: false,
+          },
+          {
+            model: Clientes,
+            as: 'cliente',
+          },
+        ],
+      });
+    } else {
+      return res.status(400).json({ msg: 'Categoría inválida' });
+    }
+
+    // Procesamos los datos y los organizamos para la respuesta
+    const resultados = productos.map(producto => {
+      // Filtrar cuotas por estado
+      const cuotasPagadas = producto.cuotas.filter(cuota => cuota.estado === 'pago');
+      const cuotasNoPagadas = producto.cuotas.filter(cuota => cuota.estado !== 'pago');
+
+      // Calcular montos
+      const totalCobrado = cuotasPagadas.reduce((total, cuota) => total + cuota.monto_cuota, 0);
+      const totalACobrar = producto.cuotas.reduce((total, cuota) => total + cuota.monto_cuota, 0);
+      const perdidas = cuotasNoPagadas.reduce((total, cuota) => total + cuota.monto_cuota, 0);
+
+      // Calcular ganancias según la categoría
+      let ganancias;
+      if (cat === 'Préstamo') {
+        ganancias = totalCobrado > producto.monto_prestado ? totalCobrado - producto.monto_prestado : 0;
+      } else if (cat === 'Plan') {
+        ganancias = totalCobrado;
+      }
+
+      // Estructura de respuesta
+      return {
+        cliente: producto.cliente, // Datos del cliente
+        cuotas: producto.cuotas,   // Cuotas asociadas al producto
+        producto: {               // Datos del producto (préstamo o plan)
+          id: producto.id,
+          nombre: producto.nombre,
+          fecha_realizado: producto.fecha_realizado,
+          estado: producto.estado,
+          sit_cliente: producto.instancia_cliente || producto.conducta_cliente,
+          monto_prestado: cat === 'Préstamo' ? producto.monto_prestado : null, // Solo para préstamos
+          cat: cat,   // Categoría para referencia (prestamo o plan)
+          ganancias,
+          perdidas,
+          total_cobrado: totalCobrado,
+          total_prestado: cat === 'Préstamo' ? producto.monto_prestado : null, // Solo para préstamos
+          total_a_cobrar: totalACobrar,
+        },
+      };
+    });
+
+    res.json({ resultados });
+
+  } catch (error) {
+    console.error('Error al obtener los productos:', error);
+    res.status(500).json({ msg: 'Error interno del servidor' });
+  }
+};
+
 
 module.exports = {
   crearUsuario,
@@ -3516,6 +3664,7 @@ module.exports = {
   cargarEquiposVentas,
   eliminarEquipoVentas,
   cargarRendiciones,
-  confirmararRendicion
+  confirmararRendicion,
+  cargarProductosPorCategoria
 
 };

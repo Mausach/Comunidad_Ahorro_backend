@@ -27,7 +27,8 @@ const { crearUsuario, cargarUsuarios, inhabilitarUsuario, cargarRoles,
   cargarEquiposVentas,
   eliminarEquipoVentas,
   cargarRendiciones,
-  confirmararRendicion} = require('../controllers/geren');
+  confirmararRendicion,
+  cargarProductosPorCategoria} = require('../controllers/geren');
 const { validarJWTGerencia } = require('../midelwares/ValidarJwtGerencia');
 
 
@@ -277,6 +278,8 @@ routerGeren.get("/equipos-venta", validarJWTGerencia, cargarEquiposVentas); // ð
 routerGeren.get('/cuotasHoy', validarJWTGerencia, cargarCuotasHoy); // cuotas hoy
 
 routerGeren.get('/entregasPactadas', validarJWTGerencia, cargarPlanesConCuotasPagadas); // cuotas para entrega pactada
+
+routerGeren.get('/productos-cat-reportes/:cat', validarJWTGerencia, cargarProductosPorCategoria); // prestamo o plan por categoria para reporte
 
 routerGeren.get('/Productos', validarJWTGerencia, cargarProductos); // Ruta para cargar los planes
 
