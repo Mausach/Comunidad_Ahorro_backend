@@ -2422,7 +2422,8 @@ const crearRendicion = async (data, cuota,cobradoId, transaction) => {
           cliente: `${data.nombrecli} ${data.apecli}`,
           metodo_pago: data.metodoPago,
           categoria: data.cat,
-          nombre: data.nombreProd
+          nombre: data.nombreProd,
+          reporteId:data.reporteId
         }
       ],
       cobradorId: cobradoId,
@@ -2481,7 +2482,8 @@ const actualizarRendicion = async (rendicionId, data, cuota, transaction) => {
             cliente: `${data.nombrecli} ${data.apecli}`,
             metodo_pago: data.metodoPago,
             categoria: data.cat,
-            nombre: data.nombreprod
+            nombre: data.nombreprod,
+            reporteId:data.reporteId
           }
         ]
       },
@@ -2718,6 +2720,95 @@ const obtenerCuotasPorCategoria = async (cat, productId, transaction) => {
 };
 
 /**************************************************** FIN DE LOS METODOS PARA COBRANZA DE CUOTAS *******************************************************/
+
+
+/**************************************************** COBRO RENDICION Y ACTUALIZACION REPORTE *******************************************************/
+
+//confirmar rendicion
+const confirmararRendicion = async (req, res) => {
+  try {
+    // Buscar la rendición por su ID
+    let rendicion = await Rendicion.findByPk(req.body.id); // Ajusta según el ORM
+
+    // Verificar si la rendición existe
+    if (!rendicion) {
+      return res.status(404).json({
+        ok: false,
+        msg: 'No existe ninguna rendición con este ID',
+      });
+    }
+
+    // Verificar si ya está habilitada
+    if (rendicion.estado) {
+      return res.status(400).json({
+        ok: false,
+        msg: 'La rendición ya ha sido habilitada anteriormente.',
+      });
+    }
+    console.log("id de la rendicion",req.body.id)
+
+    // Agrupar cuotas por reporteId
+    const reportesMap = {};
+
+rendicion.datos_de_cuotas.forEach((cuota) => {
+    const { reporteId, monto } = cuota;
+
+    if (!reporteId || isNaN(Number(reporteId))) {
+        console.error("Error: reporteId inválido en cuota", cuota);
+        return;
+    }
+
+    if (!reportesMap[reporteId]) {
+        reportesMap[reporteId] = {
+            totalCobrado: 0,
+            totalACobrar: 0,
+        };
+    }
+
+    reportesMap[reporteId].totalCobrado += monto;
+    reportesMap[reporteId].totalACobrar += monto;
+});
+
+// Actualizar cada reporte en la base de datos
+for (const reporteId in reportesMap) {
+    const reporteIdNum = Number(reporteId);
+    
+    if (isNaN(reporteIdNum)) {
+        console.error("Error: reporteId no es un número válido", reporteId);
+        continue;
+    }
+
+    console.log(`Actualizando Reporte ID: ${reporteIdNum} - total_a_cobrar: ${reportesMap[reporteId].totalACobrar}, total: ${reportesMap[reporteId].totalCobrado}`);
+
+    await Reportes.update(
+        {
+            total_a_cobrar: sequelize.literal(`total_a_cobrar - ${reportesMap[reporteId]?.totalACobrar || 0}`),
+            total: sequelize.literal(`total + ${reportesMap[reporteId]?.totalCobrado || 0}`)
+        },
+        { where: { id: reporteIdNum } }
+    );
+}
+
+    // Habilitar la rendición
+    rendicion.estado = true;
+    rendicion.fecha_y_hora = new Date().toISOString().split('T')[0]; // Guarda solo la fecha en formato YYYY-MM-DD
+    await rendicion.save();
+
+    res.status(200).json({
+      ok: true,
+      msg: 'Rendición habilitada y reportes actualizados correctamente.',
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      ok: false,
+      msg: 'Hable con el administrador',
+    });
+  }
+};
+
+/*************************************************** FIN COBRO RENDICION Y ACTUALIZACION REPORTE **************************************************/
 
 
 //editar datos cliente
@@ -3170,6 +3261,9 @@ const cargarRendiciones = async (req, res) => {
   }
 };
 
+
+
+
 const obtenerProductosClienteCuotas = async (req, res) => {
   try {
     const { clienteId } = req.params;
@@ -3421,6 +3515,7 @@ module.exports = {
   editarEquipoVentas,
   cargarEquiposVentas,
   eliminarEquipoVentas,
-  cargarRendiciones
+  cargarRendiciones,
+  confirmararRendicion
 
 };

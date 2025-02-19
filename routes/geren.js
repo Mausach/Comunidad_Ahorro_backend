@@ -26,7 +26,8 @@ const { crearUsuario, cargarUsuarios, inhabilitarUsuario, cargarRoles,
   editarEquipoVentas,
   cargarEquiposVentas,
   eliminarEquipoVentas,
-  cargarRendiciones} = require('../controllers/geren');
+  cargarRendiciones,
+  confirmararRendicion} = require('../controllers/geren');
 const { validarJWTGerencia } = require('../midelwares/ValidarJwtGerencia');
 
 
@@ -258,6 +259,8 @@ routerGeren.put('/Habilitar', validarJWTGerencia, habilitarUsuario);
 routerGeren.put('/Deshabilitar_prod', validarJWTGerencia, inhabilitarProducto);//estadod el producto
 
 routerGeren.put('/Habilitar_prod', validarJWTGerencia, habilitarProducto);//estado del producto
+
+routerGeren.put('/Confirmar-rendi', validarJWTGerencia, confirmararRendicion);//cambia estado de rndicion y actualiza los reportes
 
 
 
