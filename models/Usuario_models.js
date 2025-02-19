@@ -1,6 +1,6 @@
 const sequelize = require('../database/config');
 const { DataTypes } = require('sequelize');
-const Rol = require('./Rol_models');
+
 
 
 

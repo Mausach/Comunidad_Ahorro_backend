@@ -1,9 +1,6 @@
 const sequelize = require('../database/config');
 const { DataTypes } = require('sequelize');
-const Cuota = require('./Cuota_models');
-const Clientes = require('./Clientes_models');
-const Usuario = require('./Usuario_models');
-const Producto = require('./Producto_models');
+
 
 
 

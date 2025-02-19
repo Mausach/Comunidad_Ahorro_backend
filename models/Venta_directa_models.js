@@ -1,9 +1,7 @@
 const sequelize = require('../database/config');
 const { DataTypes } = require('sequelize');
 
-const Clientes = require('./Clientes_models');
-const Usuario = require('./Usuario_models');
-const Producto = require('./Producto_models');
+
 
 
 const Venta_directa = sequelize.define('Venta_directa', {
