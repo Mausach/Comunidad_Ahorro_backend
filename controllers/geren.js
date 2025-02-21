@@ -1539,7 +1539,7 @@ const actualizarReporteVentaDir = async (data, transaction) => {
     //porcentaje a pagar o sueldos
 
     const monto_venta = parseInt(data.monto);
-    const comision = monto_venta * 0.005; // 0.5% de comisión
+    const comision = monto_venta * 0.05; // 0.5% de comisión
 
 
     const totalObtenido = monto_venta - comision;
@@ -2154,7 +2154,7 @@ const actualizarReporteGastos = async (data, transaction) => {
     await reporte.update(
       {
 
-        total_gastos: (reporte.total || 0) + monto, //total termina siendo como lo que se tiene como el capital
+        total_gastos: (reporte.total_gastos || 0) + monto, //total termina siendo como lo que se tiene como el capital
         // total_sueldos: (reporte.total_sueldos || 0) + comision,
       },
       { transaction }
@@ -3066,7 +3066,7 @@ const cargarClientes = async (req, res) => {
   }
 };
 
-
+//cargar Roles
 const cargarRoles = async (req, res) => {
   try {
     // Obtener todos los roles excepto el rol "creator"
@@ -3113,6 +3113,73 @@ const cargarRoles = async (req, res) => {
   }
 };
 
+// Cargar todos los gastos
+const cargarGastos = async (req, res) => {
+  try {
+    // Obtener todos los productos con sus atributos completos
+    const gastos = await Gastos.findAll();
+
+    if (!gastos || gastos.length === 0) {
+      return res.status(404).json({
+        ok: false,
+        msg: 'No se encontraron productos registrados.',
+      });
+    }
+
+    res.status(200).json({
+      ok: true,
+      msg: 'Productos cargados exitosamente.',
+      gastos,
+    });
+  } catch (error) {
+    console.error('Error al cargar los productos:', error);
+    res.status(500).json({
+      ok: false,
+      msg: 'Ocurrió un error al cargar los productos. Contacte al administrador.',
+    });
+  }
+};
+
+// Cargar todos los gastos de un reporteId
+const cargarGastosDeReport = async (req, res) => {
+  try {
+    const { reporteId } = req.params; // Obtener el reporteId de los parámetros de la URL
+ console.log("el reporte id es el", reporteId)
+    // Verificar si se proporcionó un reporteId
+    if (!reporteId) {
+      return res.status(400).json({
+        ok: false,
+        msg: 'El reporteId es obligatorio.',
+      });
+    }
+
+    // Buscar los gastos asociados a ese reporteId
+    const gastos = await Gastos.findAll({
+      where: { reporteId },
+    });
+
+    // Validar si hay gastos encontrados
+    if (!gastos || gastos.length === 0) {
+      return res.status(404).json({
+        ok: false,
+        msg: `No se encontraron gastos para el reporte con ID: ${reporteId}.`,
+      });
+    }
+
+    // Responder con los gastos encontrados
+    res.status(200).json({
+      ok: true,
+      msg: 'Gastos cargados exitosamente.',
+      gastos,
+    });
+  } catch (error) {
+    console.error('Error al cargar los gastos:', error);
+    res.status(500).json({
+      ok: false,
+      msg: 'Ocurrió un error al cargar los gastos. Contacte al administrador.',
+    });
+  }
+};
 
 //quita acceso a empleados
 const inhabilitarUsuario = async (req, res) => {
@@ -3261,7 +3328,7 @@ const cargarRendiciones = async (req, res) => {
   }
 };
 
-
+//para lista de cobranza clietne sus productos y sus cuotas
 const obtenerProductosClienteCuotas = async (req, res) => {
   try {
     const { clienteId } = req.params;
@@ -3413,6 +3480,92 @@ const cargarCuotasHoy = async (req, res) => {
   }
 };
 
+// Cargar todas las cuotas con fecha de hoy
+const cargarCuotasHoyCobrador = async (req, res) => {
+  const { usuarioId } = req.params; // Obtener el usuarioId desde los parámetros de la solicitud
+  try {
+    // Obtener fecha de hoy desde las 00:00 hasta las 23:59:59
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0); // Inicio del día
+
+    const finHoy = new Date(hoy);
+    finHoy.setHours(23, 59, 59, 999); // Fin del día
+
+    // Buscar cuotas con fecha de cobro hoy y que no estén pagadas
+    const cuotas = await Cuota.findAll({
+      where: {
+        fecha_cobro: {
+          [Op.gte]: hoy, // Desde las 00:00 de hoy
+          [Op.lte]: finHoy, // Hasta las 23:59 de hoy
+        },
+        estado: { [Op.not]: "pago" }, // Excluir cuotas ya pagadas
+        usuarioId: usuarioId, // Filtrar por el usuarioId recibido
+      },
+    });
+
+    if (!cuotas || cuotas.length === 0) {
+      return res.status(404).json({
+        ok: false,
+        msg: "No hay cuotas a cobrar hoy.",
+      });
+    }
+
+    // Promesas para obtener los objetos relacionados (Plan, Préstamo, Venta Permutada)
+    const cuotasConDetalles = await Promise.all(cuotas.map(async (cuota) => {
+      let clienteId;
+      let cat = ''; //categoria de cuotas
+      let objetoRelacionado = null;
+      let cliente = null;
+      // Verificar si la cuota está asociada con un plan, préstamo o venta permutada
+      if (cuota.planId) {
+        cat = 'Plan';
+        objetoRelacionado = await Plan.findOne({ where: { id: cuota.planId } });
+      } else if (cuota.prestamoId) {
+        cat = 'Préstamo';
+        objetoRelacionado = await Prestamos.findOne({ where: { id: cuota.prestamoId } });
+      } else if (cuota.permutadoId) {
+        cat = 'Venta Permutada';
+        objetoRelacionado = await Venta_permutada.findOne({ where: { id: cuota.permutadoId } });
+      }
+
+      // Verificar si el objetoRelacionado existe y devolver el detalle
+      if (objetoRelacionado) {
+
+        // Agregar la categoría al objeto relacionado
+        objetoRelacionado = { ...objetoRelacionado.toJSON(), cat: cat };
+
+        clienteId = objetoRelacionado.clienteId; // Suponiendo que el objetoRelacionado tiene el campo clienteId
+
+        // Buscar el cliente por clientId
+        cliente = await Clientes.findOne({ where: { id: clienteId } });
+
+
+      } else {
+        console.log(`No se encontró clienteId para la cuota ${cuota.id} (${tipoCuota})`);
+      }
+
+      return {
+        cuota: cuota, // Aquí estás devolviendo toda la cuota directamente
+        objetoRelacionado,
+        cliente,
+      };
+    }));
+
+    // Respuesta con las cuotas y sus detalles
+    res.status(200).json({
+      ok: true,
+      msg: "Cuotas del día cargadas exitosamente.",
+      cuotas: cuotasConDetalles, // Devolvemos las cuotas con los detalles del cliente y el objeto relacionado
+    });
+  } catch (error) {
+    console.error("Error al cargar las cuotas:", error);
+    res.status(500).json({
+      ok: false,
+      msg: "Error al obtener las cuotas. Contacte al administrador.",
+    });
+  }
+};
+
 
 //carga los datos de una entrega pactada
 const cargarPlanesConCuotasPagadas = async (req, res) => {
@@ -3481,69 +3634,6 @@ const cargarPlanesConCuotasPagadas = async (req, res) => {
 };
 
 //carga prestamos o planes para reporte
-const cargarProductosPorCategoria2 = async (req, res) => {
-  try {
-    const { cat } = req.params; // Se obtiene la categoría (préstamos o planes)
-
-    // Dependiendo de la categoría, cargamos los productos correspondientes
-    let productos;
-    if (cat === 'Préstamo') {
-      productos = await Prestamos.findAll({
-        include: [
-          {
-            model: Cuota,
-            as: 'cuotas',
-            required: false,
-          },
-          {
-            model: Clientes,
-            as: 'cliente',
-          },
-        ],
-      });
-    } else if (cat === 'Plan') {
-      productos = await Plan.findAll({
-        include: [
-          {
-            model: Cuota,
-            as: 'cuotas',
-            required: false,
-          },
-          {
-            model: Clientes,
-            as: 'cliente',
-          },
-        ],
-      });
-    } else {
-      return res.status(400).json({ msg: 'Categoría inválida' });
-    }
-
-    // Procesamos los datos y los organizamos para la respuesta
-    const resultados = productos.map(producto => {
-      return {
-        cliente: producto.cliente, // Datos del cliente
-        cuotas: producto.cuotas,   // Cuotas asociadas al producto
-        producto: {               // Datos del producto (préstamo o plan)
-          id: producto.id,
-          nombre: producto.nombre,
-          fecha_realizado: producto.fecha_realizado,
-          estado:producto.estado,
-          sit_cliente: producto.instancia_cliente || producto.conducta_cliente,
-          monto_prestado: producto.monto_prestado || 0,
-          cat: cat,   // Categoría para referencia (prestamo o plan)
-        },
-      };
-    });
-
-    res.json({ resultados });
-
-  } catch (error) {
-    console.error('Error al obtener los productos:', error);
-    res.status(500).json({ msg: 'Error interno del servidor' });
-  }
-};
-
 const cargarProductosPorCategoria = async (req, res) => {
   try {
     const { cat } = req.params; // Se obtiene la categoría (préstamos o planes)
@@ -3610,6 +3700,7 @@ const cargarProductosPorCategoria = async (req, res) => {
           nombre: producto.nombre,
           fecha_realizado: producto.fecha_realizado,
           estado: producto.estado,
+          suscripcion_inicial: producto.suscripcion_inicial,
           sit_cliente: producto.instancia_cliente || producto.conducta_cliente,
           monto_prestado: cat === 'Préstamo' ? producto.monto_prestado : null, // Solo para préstamos
           cat: cat,   // Categoría para referencia (prestamo o plan)
@@ -3665,6 +3756,9 @@ module.exports = {
   eliminarEquipoVentas,
   cargarRendiciones,
   confirmararRendicion,
-  cargarProductosPorCategoria
+  cargarProductosPorCategoria,
+  cargarCuotasHoyCobrador,
+  cargarGastos,
+  cargarGastosDeReport
 
 };

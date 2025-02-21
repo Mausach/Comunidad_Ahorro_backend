@@ -14,7 +14,7 @@ const Venta_permutada = sequelize.define('Venta_permutada', {
   },
 
   nombre: { //descripcion como permuta, plan moto o celulares
-    type: DataTypes.STRING(15),
+    type: DataTypes.STRING(60),
     allowNull: false,
   },
 

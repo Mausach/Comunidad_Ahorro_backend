@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 
-const validarJWTAdmin = (req, res, next) => {
+const validarJWTCob = (req, res, next) => {
     //x-token headers
     const token = req.header('x-token');
 
@@ -34,5 +34,5 @@ const validarJWTAdmin = (req, res, next) => {
 };
 
 module.exports = {
-    validarJWTAdmin,
+    validarJWTCob,
 };

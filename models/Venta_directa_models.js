@@ -13,7 +13,7 @@ const Venta_directa = sequelize.define('Venta_directa', {
       },
 
       nombre_objeto: { //descripcion de objeto en venta directa
-        type: DataTypes.STRING(15), 
+        type: DataTypes.STRING(60), 
         allowNull: false,              
       },
 
@@ -49,11 +49,6 @@ const Venta_directa = sequelize.define('Venta_directa', {
     
       
 });
-
-
- 
-
-
 
 
   Venta_directa.sync();

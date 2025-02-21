@@ -17,7 +17,10 @@ const validarJWTGerencia = (req, res, next) => {//cambiar nombre por que acepta 
         const payload = jwt.verify(token, process.env.SECRET_JWT);
 
         // Verificar que el rol sea 'gerente' o 'admin'
-        if (payload.rol !== 'gerente' && payload.rol !== 'admin') {
+        if (payload.rol !== 'gerente' && 
+            payload.rol !== 'cobrador' &&
+            payload.rol !== 'vendedor' &&
+            payload.rol !== 'admin') {
             return res.status(403).json({  // Código 403 - Forbidden es más adecuado que 404
                 ok: false,
                 msg: 'No tiene permisos suficientes para acceder a esta ruta.',

@@ -1,5 +1,6 @@
+const fs = require('fs');
 require('dotenv').config();
-
+const path = require('path');
 const { Sequelize } = require('sequelize');
 
 // Verifica el valor de las variables de entorno
@@ -9,11 +10,18 @@ const { Sequelize } = require('sequelize');
 //console.log('HOST:', process.env.HOST);
 //console.log('DATABASEDIALECT:', process.env.DATABASEDIALECT);
 
-// URL de conexión proporcionada por Render
-const databaseUrl=process.env.RENDER_DB_URL;
+// Ruta al archivo del certificado CA
+
+
+
+
+
+// URL de conexión proporcionada por aiven
+//const databaseUrl=process.env.DB_URL;
+
 
 /*
-  // Configuración de conexión a la base de datos URL
+  // Configuración de conexión a la base de datos URL de render
 const sequelize = new Sequelize(
   //process.env.BASENAME,
   //process.env.BASEUSER,
@@ -23,7 +31,8 @@ const sequelize = new Sequelize(
     dialectOptions: {
       ssl: {
         require: true, // Habilita SSL
-        rejectUnauthorized: false, // Evita errores de "self signed certificate"
+        rejectUnauthorized: true, // Evita errores de "self signed certificate"
+        ca: fs.readFileSync(caCertPath).toString(), // Usa el certificado CA
       },
     },
     define: {
@@ -33,6 +42,30 @@ const sequelize = new Sequelize(
 });
 */
 
+
+//config para base en aiven
+const caPath = path.join(__dirname, 'ca.pem'); // Ajusta la ruta
+
+
+const sequelize = new Sequelize({
+  database: process.env.BASENAME_NUB,
+  username: process.env.BASEUSER_NUB,
+  password: process.env.BASEPASS_NUB,
+  host: process.env.HOST_NUB,
+  port:  process.env.PORT_NUB, // Asegúrate de que es el puerto correcto
+  dialect: 'postgres',
+  dialectOptions: {
+    ssl: {
+      require: true,
+      rejectUnauthorized: true, // ⚠️ Evita errores con certificados auto-firmados
+      ca: fs.readFileSync(caPath).toString(), // Cargar el certificado CA
+    }
+  },
+  logging: false, // Desactiva logs en consola
+});
+
+
+/*
   // Configuración de conexión a la base de datos LOCAL
 const sequelize = new Sequelize(
   process.env.BASENAME,
@@ -46,6 +79,9 @@ const sequelize = new Sequelize(
   },
   
 });
+*/
+
+
   
 
 // Exporta la instancia de Sequelize configurada
